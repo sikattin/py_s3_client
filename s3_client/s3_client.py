@@ -5,10 +5,10 @@ from mylogger.factory import StdoutLoggerFactory, \
                              RotationLoggerFactory
 import os
 import sys
+import time
 import threading
 import os.path
 import boto3
-from s3transfer.upload import UploadSubmissionTask
 
 AWS_CREDENTIAL_PROFILE = 'default'
 LOG_BASEPATH = r'/var/log'
@@ -99,6 +99,7 @@ class ProgressPercentage(object):
         object ([type]): [description]
     """
     def __init__(self, filename, logger=None):
+        self._start_time = time.time()
         self._logger = logger
         self._filename = filename
         self._size = float(os.path.getsize(filename))
@@ -108,11 +109,13 @@ class ProgressPercentage(object):
             self._logger.name = __name__
 
     def __call__(self, bytes_amount):
+        elapsed_time = time.time() - self._start_time
         with self._lock:
             self._seen_so_far += bytes_amount
             percentages = (self._seen_so_far / self._size) * 100
-            msg = "\r%s  %s / %s  (%.2f%%)" % (
-                    self._filename, self._seen_so_far, self._size, percentages
+            msg = "\r%s  %s / %s  (%.2f%%) %.2fsec" % (
+                    self._filename, self._seen_so_far, self._size, percentages,
+                    elapsed_time
                     )
             if self._logger is not None:
                 self._logger.info(msg)
