@@ -11,7 +11,10 @@ import os.path
 import boto3
 
 AWS_CREDENTIAL_PROFILE = 'default'
+AWS_REGION = 'ap-northeast-1'
 LOG_BASEPATH = r'/var/log'
+LOG_HANDLER = 'rotation'
+LOGLEVEL = 20
 LOGFILE = 'S3Operation.log'
 
 
@@ -27,39 +30,48 @@ class S3Uploader(threading.Thread):
                  logpath=None,
                  loglevel=None,
                  logger=None,
-                 handler=None):
-        """[summary]
-            bucket ([str]): [Bucket name.]
-            aws_cred_secname ([type], optional): Defaults to None. [description]
-            loglevel ([type], optional): Defaults to None. [description]
-            logpath ([type], optional): Defaults to None. [description]
-            logger ([type], optional): Defaults to None. [description]
-            handler ([type], optional): Defaults to None. [description]
+                 handler=None,
+                 aws_region=None):
+        """S3Uploader class constructor
+            bucket ([str]): target bucket name.
+            aws_cred_secname ([type], optional): Defalts to None.
+                section name of aws credential file ~/.aws/credentials | config
+            loglevel ([str], optional): Defaults to None. logging level
+            logpath ([str], optional): Defaults to None.
+                path to logging. if not specified, sets path to /var/log .
+            logger ([Logger], optional): Defaults to None.
+                logger object. if not specified, sets logger depending on handler.
+            handler ([str], optional): Defaults to None.
+                settings the logging handler.
+                a valid value is 'file' | 'console' | 'rotation'
         """
         if logpath is None:
             logpath = LOG_BASEPATH
         if loglevel is None:
-            loglevel = 20
+            loglevel = LOGLEVEL
         if handler is None:
-            handler = 'rotation'
+            handler = LOG_HANDLER
         if aws_cred_secname is None:
             aws_cred_secname = AWS_CREDENTIAL_PROFILE
+        if aws_region is None:
+            self.aws_region = AWS_REGION
         self._loglevel = loglevel
         self._handler = handler
         self._logpath = os.path.join(logpath, LOGFILE)
         self._aws_cred_secname = aws_cred_secname
-        
-        if self._aws_cred_secname == 'default':
-            session = boto3.session.Session()
-        else:
-            session = boto3.session.Session(profile_name=self._aws_cred_secname)
+        self._session_args = {
+            "profile_name": self._aws_cred_secname,
+            "region_name": self.aws_region
+        }
+        ### create a new session
+        session = boto3.session.Session(**self._session_args)
         self.__s3 = session.resource('s3')
         self.__bucket = self.__s3.Bucket(bucket)
 
-        # make log directory
+        ### make log directory
         if os.path.isdir(logpath):
             os.makedirs(logpath, exist_ok=True)
-        # create logger
+        ### create logger
         if logger is None:
             if self._handler == 'file':
                 flogger_fac = FileLoggerFactory(logger_name=__name__,
@@ -74,6 +86,11 @@ class S3Uploader(threading.Thread):
                                                     loglevel=self._loglevel)
                 self._logger = rlogger_fac.create(file=self._logpath,
                                                 bcount=10)
+            else:
+                sys.stderr.write("an invalid value of logger handler " \
+                                 "was thrown '{}' ." \
+                                 " a valid values are console, file, rotation".format(self._handler))
+                sys.stderr.flush()
         else:
             self._logger = logger
 
