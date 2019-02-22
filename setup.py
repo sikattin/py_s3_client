@@ -13,7 +13,7 @@ with open('LICENSE') as f:
 
 setup(
     name='s3_client',
-    version='1.0.1',
+    version='1.0.2',
     description='client tool for managing s3 operation.',
     long_description=readme,
     author='takeki shikano',

@@ -27,6 +27,8 @@ class S3Uploader(threading.Thread):
     def __init__(self,
                  bucket,
                  aws_cred_secname=None,
+                 aws_accesskey=None,
+                 aws_secretkey=None,
                  logpath=None,
                  loglevel=None,
                  logger=None,
@@ -44,6 +46,8 @@ class S3Uploader(threading.Thread):
             handler ([str], optional): Defaults to None.
                 settings the logging handler.
                 a valid value is 'file' | 'console' | 'rotation'
+            aws_region ([str], optional): Defaults is ap-northeast-1
+                your aws s3 bucket region name.
         """
         if logpath is None:
             logpath = LOG_BASEPATH
@@ -54,17 +58,28 @@ class S3Uploader(threading.Thread):
         if aws_cred_secname is None:
             aws_cred_secname = AWS_CREDENTIAL_PROFILE
         if aws_region is None:
-            self.aws_region = AWS_REGION
+            aws_region = AWS_REGION
         self._loglevel = loglevel
         self._handler = handler
         self._logpath = os.path.join(logpath, LOGFILE)
         self._aws_cred_secname = aws_cred_secname
+        self.__aws_accesskey = aws_accesskey
+        self.__aws_secretkey = aws_secretkey
+        self.aws_region = aws_region
         self._session_args = {
             "profile_name": self._aws_cred_secname,
             "region_name": self.aws_region
         }
+        self._session_args_usekey = {
+            "aws_access_key_id": self.__aws_accesskey,
+            "aws_secret_access_key": self.__aws_secretkey,
+            "region_name": self.aws_region
+        }
         ### create a new session
-        session = boto3.session.Session(**self._session_args)
+        if self.__aws_accesskey is None and self.__aws_secretkey is None:
+            session = boto3.session.Session(**self._session_args)
+        else:
+            session = boto3.session.Session(**self._session_args_usekey)
         self.__s3 = session.resource('s3')
         self.__bucket = self.__s3.Bucket(bucket)
 
