@@ -152,5 +152,5 @@ class ProgressPercentage(object):
             if self._logger is not None:
                 self._logger.info(msg)
             else:
-                sys.stdout.write(msg)
-                sys.stdout.flush
+                sys.stdout.write(msg + "\n")
+                sys.stdout.flush()
