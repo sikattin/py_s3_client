@@ -109,18 +109,33 @@ class S3Uploader(threading.Thread):
         else:
             self._logger = logger
 
-    def upload(self, src_path: str, key_name=None):
+    def upload(self, src_path: str, key_name=None, **extra_args):
         """[summary]
         
         Args:
-            src_path (str): [target file to upload]
-            key_name (str): [key_name on amazon s3]
+            src_path (str): target file to upload
+            key_name (str)[optional]: object key name on amazon s3
+            extra_args (various)[optional]: extra keyword arguments.
+                the list of available keywords is specified in the boto3.s3.transfer.S3Transfer.ALLOWED_UPLOAD_ARGS
         """
+        ex_args = dict()
+        ex_args = extra_args
+        
+        # filename to use by default
         if key_name is None:
             key_name = os.path.split(src_path)[1]
+        
+        # check ExtraArgs
+        if ex_args:
+            if 'Metadata' in ex_args and not isinstance(ex_args['Metadata'], dict):
+                raise ValueError('Metadata')
+        else:
+            ex_args = None
+        
         #data = open(src_path, 'rb')
         self.__bucket.upload_file(src_path,
                                   key_name,
+                                  ExtraArgs=ex_args,
                                   Callback=ProgressPercentage(src_path,
                                                               logger=self._logger))
 
