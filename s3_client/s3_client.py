@@ -91,7 +91,7 @@ class S3Uploader(threading.Thread):
             if self._handler == 'file':
                 flogger_fac = FileLoggerFactory(logger_name=__name__,
                                                 loglevel=self._loglevel)
-                self._logger = flogger_fac.create(file=self._logpath)
+                self._logger = flogger_fac.create(self._logpath)
             elif self._handler == 'console':
                 stdlogger_fac = StdoutLoggerFactory(logger_name=__name__,
                                                     loglevel=self._loglevel)
@@ -99,8 +99,8 @@ class S3Uploader(threading.Thread):
             elif self._handler == 'rotation':
                 rlogger_fac = RotationLoggerFactory(logger_name=__name__,
                                                     loglevel=self._loglevel)
-                self._logger = rlogger_fac.create(file=self._logpath,
-                                                bcount=10)
+                self._logger = rlogger_fac.create(self._logpath,
+                                                  bcount=10)
             else:
                 sys.stderr.write("an invalid value of logger handler " \
                                  "was thrown '{}' ." \
