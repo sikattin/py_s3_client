@@ -12,10 +12,9 @@ import boto3
 
 AWS_CREDENTIAL_PROFILE = 'default'
 AWS_REGION = 'ap-northeast-1'
-LOG_BASEPATH = r'/var/log'
+LOGPATH = r'/var/log/S3Operation.log'
 LOG_HANDLER = 'rotation'
 LOGLEVEL = 20
-LOGFILE = 'S3Operation.log'
 
 
 class S3Uploader(threading.Thread):
@@ -50,7 +49,7 @@ class S3Uploader(threading.Thread):
                 your aws s3 bucket region name.
         """
         if logpath is None:
-            logpath = LOG_BASEPATH
+            logpath = LOGPATH
         if loglevel is None:
             loglevel = LOGLEVEL
         if handler is None:
@@ -61,7 +60,7 @@ class S3Uploader(threading.Thread):
             aws_region = AWS_REGION
         self._loglevel = loglevel
         self._handler = handler
-        self._logpath = os.path.join(logpath, LOGFILE)
+        self._logpath = logpath
         self._aws_cred_secname = aws_cred_secname
         self.__aws_accesskey = aws_accesskey
         self.__aws_secretkey = aws_secretkey
